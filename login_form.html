@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login</title>
+  </head>
+  <style>
+    Html, body{
+		height:100%;
+	}
+
+	.grandParentContaniner{
+		display:table; height:100%; margin: 0 auto;
+	}
+
+	.parentContainer{
+		display:table-cell; vertical-align:middle;
+	}
+  .button {text-align: center;}
+  </style>
+  <body>
+    <div class="grandParentContaniner">
+      <div class="parentContainer">
+    <h1>Login</h1>
+    <form method="POST" action="/submit_form">
+      <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username">
+      </div>
+      <br>
+      <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password">
+      </div>
+      <br>
+      <div>
+        <button type="submit" action="dashboard">Login</button>
+       
+      </div>
+    </form>
+     <br>  <br> 
+    <form method="POST" action="/register" class="button">
+    <button onclick="location.href='/register'">Sign Up</button>
+    </form>
+  </div>
+ </div>
+  </body>
+</html>
