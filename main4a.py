@@ -2,25 +2,28 @@ import cv2
 from tensorflow.keras.models import load_model 
 import numpy as np  
 from pygame import mixer 
-import os
-import face_recognition
+import os 
+import face_recognition 
 import datetime 
 import csv 
-import time
-
-os.chdir("/home/user/Downloads/DDDDeep/EY_Dataset/dataset_new")
+import time 
+import sqlite3
+import smtplib
+import dlib
+from imutils import face_utils
+os.chdir("/home/user/Downloads/Project_new")
 
 
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
 
-model = load_model('Eye_dataset/models/model_eyes1.h5')
-model2 = load_model('yawn_dataset/models/model_yawn1.h5')
+model = load_model('model/model_eyes1.h5')
+model2 = load_model('model/model_yawn1.h5')
 
 
 mixer.init()
-sound= mixer.Sound(r'/home/user/Downloads/DDDDeep/alarm.wav')
+sound= mixer.Sound(r'/home/user/Downloads/Project_new/alarm.wav')
 cap = cv2.VideoCapture(0)
 
 eye_score = 0
@@ -32,15 +35,13 @@ yawn_counter=0
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
 
-
-
 # Load images and labels for face recognition
 known_face_encodings = []
 known_face_labels = []
 
 
-img_path_1 = "/home/user/Downloads/DDDDeep/Ajnas.jpg"
-img_path_2 = "/home/user/Downloads/DDDDeep/Aswanth_A.jpeg"
+img_path_1 = "/home/user/Downloads/Project_new/Training_images/Ajnas.jpg"
+img_path_2 = "/home/user/Downloads/Project_new/Training_images/Aswanth_A.jpg"
 
 img_1 = cv2.imread(img_path_1)
 img_2 = cv2.imread(img_path_2)
@@ -60,6 +61,29 @@ with open('data.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Name', 'Eye Status', 'Yawn Status', 'Time'])
 
+
+
+def send_email():
+    sender_email = "touristbusdriver1@gmail.com"
+    receiver_email = "touristbusadmi@gmail.com"
+    password = "grww etbe bonf lpox"
+
+    subject = "Alert!"
+    message = "The alert sound is continuously playing the driver getting drowsy."
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, f"Subject: {subject}\n\n{message}")
+        print("Email sent successfully")
+    except Exception as e:
+        print(f"Error: {str(e)}")
+    finally:
+        server.quit()
+
+
+
 while True:
         ret, frame = cap.read()
         height,width = frame.shape[0:2]
@@ -70,9 +94,8 @@ while True:
         
         cv2.rectangle(frame, (0,height-50),(200,height),(0,0,0),thickness=cv2.FILLED)
 
-
-        
-         # Detect faces in the frame
+     
+        # Detect faces in the frame
         face_locations = face_recognition.face_locations(frame)
         face_encodings = face_recognition.face_encodings(frame, face_locations)
 
@@ -90,6 +113,7 @@ while True:
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
             cv2.putText(frame, name, (left, top - 6), font, 0.5, (0, 0, 255), 2)
        
+
         
 
         for (x,y,w,h) in faces:
@@ -113,6 +137,7 @@ while True:
                         print("No Yawn")
                         yawn_status = "No_Yawn"
                         cv2.putText(frame,'No Yawn',(10,height-380),fontFace=cv2.FONT_HERSHEY_COMPLEX_SMALL,fontScale=1,color=(0,0,255),thickness=1,lineType=cv2.LINE_AA)
+
 
         for (ex,ey,ew,eh) in eyes:  
                 cv2.rectangle(frame,pt1=(ex,ey),pt2=(ex+ew,ey+eh), color=(255,0,0), thickness=3 )
@@ -144,9 +169,10 @@ while True:
                 #person is feeling sleepy so we beep the alarm
                 if(yawn_counter/7>=3):
                         yawn_counter=0
+                       
                 try:
                         sound.play()
-                        
+                        send_email()
                         yawn_counter+=1
                 except: # isplaying = False
                         pass
@@ -158,6 +184,7 @@ while True:
                                 yawn_thicc=2
                 cv2.rectangle(frame,(0,0),(width,height),(0,0,255),yawn_thicc)
 
+
         if(eye_score<0):
                         eye_score=0
         cv2.putText(frame,'Score:'+str(eye_score),(100,height-20), font,1,(255,255,255),1,cv2.LINE_AA)
@@ -166,8 +193,11 @@ while True:
                 #person is feeling sleepy so we beep the alarm
                 if(eye_counter/8>=3):
                         eye_counter=0
+                       
                 try:
                         sound.play()
+                        time.sleep(10)
+                        send_email()
                         eye_counter+=1
 
                 except: # isplaying = False
@@ -187,10 +217,10 @@ while True:
          # Get current time
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Save data in CSV file
+            # Save data in CSV file
         with open('data.csv', mode='a', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow([name,eye_status, yawn_status, current_time])           
+                writer.writerow([name,eye_status, yawn_status, current_time])     
 
 cap.release()
 cv2.destroyAllWindows()
